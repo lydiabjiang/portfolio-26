@@ -8,7 +8,7 @@ export default function Marquee() {
       <div className="marquee__track">
         {items.map((text, i) => (
           <span className="marquee__item" key={i} aria-hidden={i >= marquee.length}>
-            <span className={`marquee__dot ${i % 2 ? 'bg-yellow' : 'bg-purple'}`} />
+            <span className={`marquee__dot ${i % 2 ? 'bg-blue' : 'bg-purple'}`} />
             {text}
           </span>
         ))}

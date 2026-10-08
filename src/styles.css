@@ -8,18 +8,20 @@
   --muted: #8a8a8a;
   --dim: #5c5c5c;
 
-  --purple: #c2a8ff;
-  --purple-soft: #e2d6ff;
-  --purple-blob: #d4c2ff;
+  --purple: #c4a6ff;
+  --purple-soft: #e6dbff;
+  --purple-blob: #d6c2ff;
   --purple-ink: #0b0812;
   --purple-eyebrow: #221443;
 
-  --yellow: #ffef93;
-  --yellow-strong: #dbba00;
-  --yellow-blob: #ffdd1a;
-  --yellow-ink: #1a1600;
-  --yellow-eyebrow: #7a6800;
-  --yellow-btn-ink: #322a01;
+  --blue: #a6baff;
+  --blue-strong: #8ba0f5;
+  --blue-blob: #c9d5ff;
+  --blue-ink: #080d1f;
+  --blue-eyebrow: #2f3f7a;
+  --blue-btn-ink: #0d1636;
+
+  --accent-gradient: linear-gradient(90deg, var(--blue), var(--purple));
 
   --radius: 20px;
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
@@ -84,6 +86,15 @@ ol {
   border-radius: 6px;
 }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 .container {
   width: 100%;
   max-width: calc(var(--container) + var(--gutter) * 2);
@@ -102,14 +113,14 @@ ol {
 .text-purple {
   color: var(--purple);
 }
-.text-yellow {
-  color: var(--yellow);
+.text-blue {
+  color: var(--blue);
 }
 .bg-purple {
   background: var(--purple);
 }
-.bg-yellow {
-  background: var(--yellow);
+.bg-blue {
+  background: var(--blue);
 }
 
 /* ---------- Buttons ---------- */
@@ -245,7 +256,7 @@ ol {
   opacity: 1;
 }
 
-/* ---------- Headline + particle word ---------- */
+/* ---------- Headline + focus word ---------- */
 .headline {
   font-weight: 500;
   letter-spacing: -0.05em;
@@ -272,43 +283,149 @@ ol {
   transform: none;
 }
 
-.particle-word {
-  position: relative;
+/* Focus phrases slide up too. clip-path only trims what's below the line (the
+   incoming text), and leaves room on every side for the blur and glow to spill. */
+.focus-clip {
   display: inline-block;
   vertical-align: top;
+  clip-path: inset(-1em -1em -0.35em -1em);
 }
-.particle-word__src,
-.particle-word__placeholder {
+.focus-clip .word-inner {
+  transform: translateY(calc(100% + 0.4em));
+}
+
+/* Focus word: plays a one-time lens drift, then blurs under the cursor */
+@property --focus-r {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 0px;
+}
+
+.focus-word {
+  --pad: 0.3em; /* room for the blur to spill past the letters */
+  position: relative;
   display: inline-block;
+  --focus-r: 0px;
+  --mx: 0px; /* defaults keep the masks valid before the first hover */
+  --my: 0px;
+  /* Leaving: the circle shrinks slowly with a gentle start, so the text unblurs gradually.
+     (Its position lags the cursor via JS.) */
+  transition: --focus-r 1.8s cubic-bezier(0.45, 0, 0.25, 1);
+}
+/* Visual layers only — copying the headline picks up the screen-reader text instead */
+.focus-word__sharp,
+.focus-word__blur {
+  user-select: none;
+  -webkit-user-select: none;
+}
+.focus-word__sharp {
+  display: inline-block;
+}
+.focus-word__letter {
+  display: inline-block;
+  /* this letter's color along the accent gradient (--t: 0 at the left, 1 at the right) */
+  --letter-tint: color-mix(in srgb, var(--purple) calc(var(--t, 0) * 100%), var(--blue));
+}
+/* Gradient variant: each letter shows its slice of one phrase-wide gradient.
+   The text fill stays transparent at rest and fades to blue while blurred. */
+.focus-word--gradient .focus-word__sharp .focus-word__letter {
+  --letter-ink: transparent;
   color: transparent;
+  background: var(--accent-gradient) calc(var(--x, 0em) * -1) 0 / var(--phrase-w, 100%) 100% no-repeat;
+  -webkit-background-clip: text;
+  background-clip: text;
 }
-.particle-word__src.is-static {
-  color: inherit;
+
+/* 1. Starts blurred and blue, then comes into focus letter by letter, left to right.
+   `both` holds every letter in the blurred state until its turn. */
+.headline.is-in .focus-word:not(.is-interactive) .focus-word__sharp .focus-word__letter {
+  animation: focus-reveal 1.6s cubic-bezier(0.4, 0, 0.2, 1) calc(0.6s + var(--i) * 0.12s) 1 both;
 }
-.particle-word__canvas {
+@keyframes focus-reveal {
+  from {
+    color: var(--letter-tint);
+    filter: blur(0.09em);
+    opacity: 0.75;
+    text-shadow: 0 0 0.35em var(--letter-tint);
+  }
+  to {
+    color: var(--letter-ink, var(--text));
+    filter: blur(0);
+    opacity: 1;
+    text-shadow: 0 0 0 transparent;
+  }
+}
+
+/* 2. Afterwards: a blurred blue copy, revealed only around the cursor */
+.focus-word__blur {
   position: absolute;
+  inset: calc(var(--pad) * -1);
+  padding: var(--pad);
   pointer-events: none;
+  opacity: 0.75;
+  filter: blur(0.09em);
+  visibility: hidden;
+  --spot: radial-gradient(
+    circle var(--focus-r) at calc(var(--mx) + var(--pad)) calc(var(--my) + var(--pad)),
+    #000 45%,
+    transparent 100%
+  );
+  mask-image: var(--spot);
+  -webkit-mask-image: var(--spot);
+}
+.focus-word__blur .focus-word__letter {
+  color: var(--letter-tint);
+  text-shadow: 0 0 0.35em var(--letter-tint);
+}
+.focus-word.is-interactive .focus-word__blur {
+  visibility: visible;
+}
+.focus-word.is-interactive .focus-word__sharp {
+  --hole: radial-gradient(
+    circle var(--focus-r) at var(--mx) var(--my),
+    transparent 45%,
+    #000 100%
+  );
+  mask-image: var(--hole);
+  -webkit-mask-image: var(--hole);
+}
+@media (hover: hover) {
+  .focus-word.is-interactive:hover {
+    --focus-r: 1.2em;
+    /* Entering: grows in a beat after the cursor arrives */
+    transition: --focus-r 0.8s var(--ease-out) 0.12s;
+  }
 }
 
 /* ---------- Hero ---------- */
+/* Fills the first screen: the text is centered in the space between the nav and the marquee */
 .hero {
-  padding: clamp(140px, 22vh, 220px) 0 0;
+  padding: 84px 0 clamp(24px, 6vh, 64px); /* top clears the fixed nav */
   min-height: 100svh;
   display: flex;
   flex-direction: column;
+}
+.hero > .container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   justify-content: center;
+  /* extra space below lifts the text slightly above true center, which reads as centered */
+  padding-block: clamp(24px, 5vh, 64px) clamp(56px, 11vh, 128px);
 }
 .hero__eyebrow {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  width: fit-content; /* so the gradient spans the text, not the whole row */
   margin-bottom: 28px;
-}
-.eyebrow__dot {
-  color: var(--dim);
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 .hero__title {
-  font-size: clamp(2.5rem, 6.4vw, 4.6rem);
+  font-size: clamp(2rem, 9.2vw, 7rem);
 }
 .hero__intro {
   margin-top: 32px;
@@ -335,7 +452,6 @@ ol {
 
 /* ---------- Marquee ---------- */
 .marquee {
-  margin-top: clamp(64px, 12vh, 120px);
   padding: 22px 0;
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
@@ -393,19 +509,16 @@ ol {
 /* ---------- Work ---------- */
 .projects {
   display: grid;
-  gap: clamp(64px, 9vw, 112px);
+  grid-template-columns: repeat(2, 1fr);
+  gap: clamp(56px, 7vw, 88px) clamp(20px, 2.5vw, 32px);
 }
 .project__link {
   display: block;
 }
-@media (hover: hover) and (pointer: fine) {
-  .project__link {
-    cursor: none;
-  }
-}
 .project__media {
   position: relative;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 4 / 3;
+  container-type: inline-size; /* mockup sizes scale with the card */
   border-radius: var(--radius);
   overflow: hidden;
   background: var(--surface);
@@ -425,12 +538,12 @@ ol {
   opacity: 1;
 }
 .accent-purple {
-  --glow: rgba(194, 168, 255, 0.35);
+  --glow: rgba(196, 166, 255, 0.35);
   --accent: var(--purple);
 }
-.accent-yellow {
-  --glow: rgba(255, 239, 147, 0.28);
-  --accent: var(--yellow);
+.accent-blue {
+  --glow: rgba(166, 186, 255, 0.3);
+  --accent: var(--blue);
 }
 .accent-neutral {
   --glow: rgba(255, 255, 255, 0.12);
@@ -457,7 +570,7 @@ ol {
   color: var(--muted);
 }
 .project__title {
-  font-size: clamp(1.4rem, 2.6vw, 2rem);
+  font-size: clamp(1.2rem, 1.9vw, 1.5rem);
   font-weight: 500;
   letter-spacing: -0.03em;
   line-height: 1.25;
@@ -469,36 +582,6 @@ ol {
 }
 .project__link:hover .project__outcome {
   color: var(--muted);
-}
-
-.cursor-pill {
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 60;
-  pointer-events: none;
-}
-.cursor-pill span {
-  display: block;
-  padding: 8px 16px;
-  border-radius: 999px;
-  background: var(--yellow);
-  color: #7a6800;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  transform: translate(-50%, -50%) scale(0);
-  transition: transform 0.35s var(--ease-out);
-}
-.cursor-pill.is-on span {
-  transform: translate(-50%, -50%) scale(1);
-}
-@media (hover: none), (pointer: coarse) {
-  .cursor-pill {
-    display: none;
-  }
 }
 
 /* Placeholder project artwork */
@@ -580,7 +663,7 @@ ol {
   background: rgba(255, 255, 255, 0.035);
 }
 .pv-stat span {
-  font-size: clamp(10px, 1.4vw, 16px);
+  font-size: clamp(9px, 3cqi, 16px);
   font-weight: 600;
   letter-spacing: -0.02em;
 }
@@ -597,7 +680,7 @@ ol {
 .pv-chart span {
   flex: 1;
   border-radius: 4px 4px 2px 2px;
-  background: rgba(194, 168, 255, 0.3);
+  background: rgba(196, 166, 255, 0.3);
 }
 .pv-chart span.is-hi {
   background: var(--accent);
@@ -629,7 +712,7 @@ ol {
 .pv-phone__hero {
   flex: 1;
   border-radius: 16px;
-  background: var(--yellow);
+  background: var(--blue);
   padding: 14px;
   display: flex;
   flex-direction: column;
@@ -638,9 +721,9 @@ ol {
   --line: rgba(50, 42, 1, 0.25);
 }
 .pv-phone__hero span {
-  color: var(--yellow-btn-ink);
+  color: var(--blue-btn-ink);
   font-weight: 600;
-  font-size: clamp(11px, 1.6vw, 18px);
+  font-size: clamp(9px, 2.6cqi, 15px);
   letter-spacing: -0.03em;
 }
 .pv-steps {
@@ -656,7 +739,7 @@ ol {
 }
 .pv-steps i.is-on {
   width: 18px;
-  background: var(--yellow);
+  background: var(--blue);
 }
 .pv-cta {
   display: block;
@@ -669,7 +752,7 @@ ol {
   width: 62%;
   aspect-ratio: 1;
   border-radius: 50%;
-  background: conic-gradient(var(--yellow) 0 72%, #2c2c2c 72% 100%);
+  background: conic-gradient(var(--blue) 0 72%, #2c2c2c 72% 100%);
   display: grid;
   place-items: center;
   margin: 6px 0;
@@ -682,7 +765,7 @@ ol {
   display: grid;
   place-items: center;
   font-weight: 600;
-  font-size: clamp(10px, 1.4vw, 15px);
+  font-size: clamp(9px, 3cqi, 15px);
 }
 .pv-row {
   display: flex;
@@ -706,7 +789,7 @@ ol {
   background: #1f1f1f;
   border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: 14px;
-  padding: clamp(12px, 2vw, 22px);
+  padding: clamp(10px, 3.6cqi, 22px);
 }
 .pv-swatches {
   display: flex;
@@ -723,7 +806,7 @@ ol {
   gap: 16px;
 }
 .pv-type__aa {
-  font-size: clamp(28px, 5vw, 56px);
+  font-size: clamp(24px, 9cqi, 56px);
   font-weight: 500;
   letter-spacing: -0.05em;
   line-height: 1;
@@ -744,7 +827,7 @@ ol {
 .pv-chip {
   padding: 8px 16px;
   border-radius: 999px;
-  font-size: clamp(10px, 1.2vw, 13px);
+  font-size: clamp(9px, 2.4cqi, 13px);
   font-weight: 600;
 }
 .pv-btn--purple {
@@ -775,20 +858,60 @@ ol {
   background: #2a2a2a;
   color: var(--muted);
 }
-.pv-chip--yellow {
-  background: var(--yellow);
-  color: var(--yellow-btn-ink);
+.pv-chip--blue {
+  background: var(--blue);
+  color: var(--blue-btn-ink);
 }
 .pv-check {
   width: 22px;
   height: 22px;
   border-radius: 6px;
-  background: var(--yellow);
-  color: var(--yellow-btn-ink);
+  background: var(--blue);
+  color: var(--blue-btn-ink);
   display: grid;
   place-items: center;
   font-size: 12px;
   font-weight: 700;
+}
+
+.pv-board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  align-items: start;
+  gap: 4cqi;
+  padding: 5cqi;
+  background: #1f1f1f;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.6);
+}
+.pv-board__col {
+  display: flex;
+  flex-direction: column;
+  gap: 2.6cqi;
+}
+.pv-sticky {
+  display: flex;
+  flex-direction: column;
+  gap: 1.6cqi;
+  padding: 2.6cqi;
+  aspect-ratio: 1 / 0.8;
+  border-radius: 6px;
+  transform: rotate(var(--r, 0deg));
+  box-shadow: 0 8px 18px -10px rgba(0, 0, 0, 0.7);
+  --line: rgba(0, 0, 0, 0.18);
+}
+.pv-sticky .pv-line {
+  height: max(4px, 1.2cqi);
+}
+.pv-sticky--purple {
+  background: var(--purple);
+}
+.pv-sticky--blue {
+  background: var(--blue);
+}
+.pv-sticky--light {
+  background: #dedede;
 }
 
 /* ---------- Principles (sticky stack) ---------- */
@@ -809,6 +932,8 @@ ol {
   background: var(--surface);
   border: 1px solid var(--border);
   box-shadow: 0 -20px 40px -20px rgba(0, 0, 0, 0.6);
+  /* blurs as the next card stacks on top (--cover is set on scroll) */
+  filter: blur(calc(var(--cover, 0) * 6px));
 }
 .principle__num {
   font-size: clamp(3rem, 7vw, 5.5rem);
@@ -830,7 +955,7 @@ ol {
   font-size: clamp(1rem, 1.3vw, 1.1rem);
 }
 
-/* ---------- Services (purple + yellow cards) ---------- */
+/* ---------- Services (purple + blue cards) ---------- */
 .services {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -907,19 +1032,19 @@ ol {
   background: #fff;
 }
 
-.service-card--yellow {
-  background: var(--yellow);
-  color: var(--yellow-ink);
+.service-card--blue {
+  background: var(--blue);
+  color: var(--blue-ink);
 }
-.service-card--yellow .service-card__eyebrow {
-  color: var(--yellow-eyebrow);
+.service-card--blue .service-card__eyebrow {
+  color: var(--blue-eyebrow);
 }
-.service-card--yellow .blob-btn {
-  background: var(--yellow-strong);
-  color: var(--yellow-btn-ink);
+.service-card--blue .blob-btn {
+  background: var(--blue-strong);
+  color: var(--blue-btn-ink);
 }
-.service-card--yellow .blob-btn__blob {
-  background: var(--yellow-blob);
+.service-card--blue .blob-btn__blob {
+  background: var(--blue-blob);
 }
 
 /* ---------- Contact ---------- */
@@ -946,8 +1071,8 @@ ol {
   height: 56px;
   padding: 0 26px;
   font-size: 16px;
-  background: var(--yellow);
-  color: var(--yellow-btn-ink);
+  background: var(--blue);
+  color: var(--blue-btn-ink);
 }
 .contact__email .blob-btn__blob {
   background: var(--purple);
@@ -984,6 +1109,12 @@ ol {
 }
 
 /* ---------- Responsive ---------- */
+@media (max-width: 760px) {
+  .projects {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 860px) {
   .services {
     grid-template-columns: 1fr;
@@ -1001,9 +1132,6 @@ ol {
   .nav__inner,
   .nav.is-scrolled .nav__inner {
     width: 100%;
-  }
-  .project__media {
-    aspect-ratio: 4 / 3;
   }
   .pv {
     width: 88%;
@@ -1038,8 +1166,10 @@ ol {
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
   }
   .marquee__track {
     animation: none;

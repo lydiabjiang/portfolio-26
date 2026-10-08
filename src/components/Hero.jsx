@@ -7,11 +7,11 @@ export default function Hero() {
     <section className="hero" id="top">
       <div className="container">
         <p className="eyebrow hero__eyebrow fade-in" style={{ animationDelay: '0ms' }}>
-          <span className="text-purple">{hero.eyebrow[0]}</span>
-          <span className="eyebrow__dot">·</span>
-          <span className="text-yellow">{hero.eyebrow[1]}</span>
+          <span>{hero.eyebrow[0]}</span>
+          <span aria-hidden="true">·</span>
+          <span>{hero.eyebrow[1]}</span>
         </p>
-        <Headline lines={hero.lines} className="hero__title" />
+        <Headline lines={hero.lines} className="hero__title" gradient />
         <p className="hero__intro fade-in" style={{ animationDelay: '600ms' }}>
           {hero.intro}
         </p>

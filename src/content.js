@@ -20,24 +20,26 @@ export const nav = [
 ]
 
 export const hero = {
-  eyebrow: ['Product designer', 'UX, UI & design systems'],
-  // Wrap one word in *asterisks* to render it as interactive particles.
-  lines: ['I help teams *shape*', 'ideas into products people love.'],
+  eyebrow: ['Product designer', 'UX/UI & prototyping'],
+  // Wrap a word or phrase in *asterisks* to make it blur into focus on load and blur around the cursor on hover
+  // (and, in the hero, the blue-to-purple gradient).
+  lines: ['I design *clear solutions*', 'for complex spaces.'],
   intro:
-    "I'm Lydia — I turn complex problems into clear, considered experiences, from early research to polished, shipped UI.",
+    "I'm Lydia, a product designer based in the San Francisco Bay Area.",
 }
 
 export const marquee = [
   'End-to-end product design',
-  'Design systems that scale',
-  'User research & usability testing',
-  'Prototyping in Figma and code',
-  'Accessibility from day one',
+  'Vibe coded & Figma prototypes',
+  'User-driven designs',
+  'High technical ability',
+  'Organizing cross-functional teams',
+  'Working with design systems',
 ]
 
 // TODO: replace with your real case studies.
-// visual: 'dashboard' | 'mobile' | 'system'
-// accent: 'purple' | 'yellow' | 'neutral'
+// Shown two per row. visual: 'dashboard' | 'mobile' | 'system' | 'research'
+// accent: 'purple' | 'blue' | 'neutral'
 export const projects = [
   {
     title: 'Rethinking analytics for small business owners',
@@ -52,7 +54,7 @@ export const projects = [
     outcome: '— from sign-up to first insight in a handful of taps.',
     tags: ['Mobile', 'Onboarding', 'Product strategy'],
     visual: 'mobile',
-    accent: 'yellow',
+    accent: 'blue',
     href: '#',
   },
   {
@@ -60,7 +62,15 @@ export const projects = [
     outcome: '— one source of truth for designers and engineers.',
     tags: ['Design systems', 'Accessibility', 'Documentation'],
     visual: 'system',
-    accent: 'neutral',
+    accent: 'blue',
+    href: '#',
+  },
+  {
+    title: 'Mapping the patient journey for a telehealth service',
+    outcome: '— research that reshaped the product roadmap.',
+    tags: ['UX research', 'Service design', 'Healthcare'],
+    visual: 'research',
+    accent: 'purple',
     href: '#',
   },
 ]
@@ -94,7 +104,7 @@ export const services = [
     href: '#work',
   },
   {
-    tone: 'yellow',
+    tone: 'blue',
     eyebrow: 'Systems & research',
     title: 'Foundations that help teams move faster',
     body: 'Design systems, component libraries and research programs that keep products consistent as they grow.',

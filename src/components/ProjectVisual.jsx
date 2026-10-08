@@ -4,6 +4,7 @@
 export default function ProjectVisual({ kind }) {
   if (kind === 'mobile') return <Mobile />
   if (kind === 'system') return <System />
+  if (kind === 'research') return <Research />
   return <Dashboard />
 }
 
@@ -76,7 +77,7 @@ function System() {
   return (
     <div className="pv pv-system">
       <div className="pv-swatches">
-        {['#c2a8ff', '#ffef93', '#dedede', '#8a8a8a', '#2a2a2a'].map((c) => (
+        {['#c4a6ff', '#a6baff', '#dedede', '#8a8a8a', '#2a2a2a'].map((c) => (
           <span key={c} style={{ background: c }} />
         ))}
       </div>
@@ -93,9 +94,37 @@ function System() {
         <span className="pv-btn pv-btn--ghost">Secondary</span>
         <span className="pv-toggle"><i /></span>
         <span className="pv-chip">Chip</span>
-        <span className="pv-chip pv-chip--yellow">Beta</span>
+        <span className="pv-chip pv-chip--blue">Beta</span>
         <span className="pv-check">✓</span>
       </div>
+    </div>
+  )
+}
+
+function Research() {
+  const columns = [
+    { tone: 'purple', notes: [[80, 55], [70, 85], [90, 60]] },
+    { tone: 'blue', notes: [[75, 60], [85, 50]] },
+    { tone: 'light', notes: [[65, 80], [80, 55], [70, 45]] },
+  ]
+  return (
+    <div className="pv pv-board">
+      {columns.map((col, ci) => (
+        <div className="pv-board__col" key={ci}>
+          <b className="pv-line" style={{ width: '55%' }} />
+          {col.notes.map((lines, ni) => (
+            <div
+              key={ni}
+              className={`pv-sticky pv-sticky--${col.tone}`}
+              style={{ '--r': `${((ci + ni) % 3) - 1}deg` }}
+            >
+              {lines.map((w, li) => (
+                <b key={li} className="pv-line" style={{ width: `${w}%` }} />
+              ))}
+            </div>
+          ))}
+        </div>
+      ))}
     </div>
   )
 }

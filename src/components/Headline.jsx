@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react'
-import ParticleText from './ParticleText'
+import FocusText from './FocusText'
 
 const STAGGER = 70
 
 /**
  * Splits lines into words that slide up into view one by one.
- * A word wrapped in *asterisks* becomes a <ParticleText>.
+ * A word or phrase wrapped in *asterisks* becomes a <FocusText>;
+ * `gradient` gives those focus words the accent gradient.
  */
-export default function Headline({ as: Tag = 'h1', lines, className = '', start = true }) {
+export default function Headline({ as: Tag = 'h1', lines, className = '', start = true, gradient = false }) {
   const [inView, setInView] = useState(false)
 
   useEffect(() => {
@@ -21,24 +22,27 @@ export default function Headline({ as: Tag = 'h1', lines, className = '', start 
     <Tag className={`headline ${inView ? 'is-in' : ''} ${className}`}>
       {lines.map((line, li) => (
         <span className="headline__line" key={li}>
-          {line.split(' ').map((word, wi) => {
+          {/* Tokens are plain words or *focus phrases*; punctuation right after a phrase stays attached */}
+          {[...line.matchAll(/\*([^*]+)\*|[^\s*]+/g)].map((m, ti) => {
             const i = index++
-            const particle = /^\*(.+)\*([.,!?]*)$/.exec(word)
-            const space = wi > 0 ? ' ' : ''
-            if (particle) {
+            const space = m.index > 0 && line[m.index - 1] === ' ' ? ' ' : ''
+            if (m[1]) {
+              // Slides up like the other words, but its clip leaves room for the blur to spill.
               return (
-                <span key={wi}>
+                <span key={ti}>
                   {space}
-                  {inView && <ParticleText delay={i * STAGGER + 150}>{particle[1]}</ParticleText>}
-                  {!inView && <span className="particle-word__placeholder">{particle[1]}</span>}
-                  {particle[2] && <Word i={i}>{particle[2]}</Word>}
+                  <span className="focus-clip">
+                    <span className="word-inner" style={{ transitionDelay: `${i * STAGGER}ms` }}>
+                      <FocusText gradient={gradient}>{m[1]}</FocusText>
+                    </span>
+                  </span>
                 </span>
               )
             }
             return (
-              <span key={wi}>
+              <span key={ti}>
                 {space}
-                <Word i={i}>{word}</Word>
+                <Word i={i}>{m[0]}</Word>
               </span>
             )
           })}
